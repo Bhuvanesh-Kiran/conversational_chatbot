@@ -46,9 +46,9 @@ define('DB_NAME', 'chatbot_db'); // already set
 define('DB_USER', 'root');        // ⚠️ your MySQL username
 define('DB_PASS', '');            // ⚠️ your MySQL password (XAMPP default = empty)
 
-// ANTHROPIC API KEY
-define('ANTHROPIC_API_KEY', 'YOUR_ANTHROPIC_API_KEY_HERE');
-// Get key from: https://console.anthropic.com/
+// AI API KEY
+define('AI_API_KEY', 'YOUR_KEY_HERE');
+
 ```
 
 ### Step 5 — Run
@@ -62,7 +62,7 @@ Open browser → **http://localhost/chatbot_project/index.html**
 |------|----------------|-------|
 | `config.php` | Line 10: `DB_USER` — your MySQL username | Line 10 |
 | `config.php` | Line 11: `DB_PASS` — your MySQL password | Line 11 |
-| `config.php` | Line 15: `ANTHROPIC_API_KEY` — paste your API key | Line 15 |
+| `config.php` | Line 15: `AI_API_KEY` — paste your API key | Line 15 |
 | `config.php` | Line 20: `BOT_NAME` — rename the bot (optional) | Line 20 |
 | `config.php` | Lines 21-26: `SYSTEM_PROMPT` — customize bot personality | Lines 21-26 |
 
