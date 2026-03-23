@@ -70,13 +70,6 @@ Open browser → **http://localhost/chatbot_project/index.html**
 
 ---
 
-## 🔑 Getting an Anthropic API Key
-1. Go to https://console.anthropic.com/
-2. Sign up / Log in
-3. Go to **API Keys** → **Create Key**
-4. Copy and paste into `config.php`
-
----
 
 ## ✨ Features Implemented
 
