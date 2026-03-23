@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Aria — AI Customer Support</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* ============================================================
+   DESIGN SYSTEM
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:     #0f0e17;
+  --paper:   #fffcf7;
+  --warm:    #f2e8d9;
+  --accent:  #e8613a;
+  --accent2: #2b6cb0;
+  --muted:   #7a6f66;
+  --border:  #e0d5c5;
+  --shadow:  0 4px 24px rgba(15,14,23,.10);
+  --r:       16px;
+  --font-head: 'DM Serif Display', Georgia, serif;
+  --font-body: 'DM Sans', sans-serif;
+}
+
+html, body { height: 100%; background: var(--warm); font-family: var(--font-body); color: var(--ink); }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.app {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  grid-template-rows: 100vh;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  background: var(--ink);
+  color: var(--paper);
+  display: flex;
+  flex-direction: column;
+  padding: 32px 24px;
+  gap: 32px;
+  overflow-y: auto;
+}
+
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--accent); display: grid; place-items: center;
+  font-size: 18px;
+}
+.logo-text { font-family: var(--font-head); font-size: 22px; letter-spacing: .3px; }
+
+.sidebar-section h3 {
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+  color: #8a7f76; margin-bottom: 12px;
+}
+
+.stat-card {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+}
+.stat-card .label { font-size: 11px; color: #8a7f76; margin-bottom: 4px; }
+.stat-card .value { font-size: 22px; font-weight: 600; }
+
+.intent-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,.07); border-radius: 6px;
+  padding: 5px 10px; font-size: 12px; margin: 3px 2px;
+}
+.intent-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+}
+
+.new-chat-btn {
+  margin-top: auto;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: 10px; padding: 12px 20px;
+  font-family: var(--font-body); font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: opacity .2s;
+  display: flex; align-items: center; gap: 8px;
+}
+.new-chat-btn:hover { opacity: .88; }
+
+/* ============================================================
+   MAIN CHAT AREA
+   ============================================================ */
+.chat-area {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.chat-header {
+  padding: 20px 28px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--paper);
+}
+.chat-header-info { display: flex; align-items: center; gap: 12px; }
+.avatar {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent) 0%, #c44a27 100%);
+  display: grid; place-items: center; font-size: 16px; flex-shrink: 0;
+}
+.chat-header h2 { font-family: var(--font-head); font-size: 20px; line-height: 1; }
+.chat-header p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.status-pill {
+  background: #d1fae5; color: #065f46;
+  border-radius: 20px; padding: 4px 12px; font-size: 11px; font-weight: 500;
+  display: flex; align-items: center; gap: 5px;
+}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* Messages */
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  scroll-behavior: smooth;
+}
+.messages-container::-webkit-scrollbar { width: 4px; }
+.messages-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.message { display: flex; gap: 12px; max-width: 76%; animation: fadeUp .3s ease; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.message.user { align-self: flex-end; flex-direction: row-reverse; }
+.message.assistant { align-self: flex-start; }
+
+.msg-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 14px; flex-shrink: 0;
+  margin-top: 2px;
+}
+.message.assistant .msg-avatar { background: var(--ink); }
+.message.user .msg-avatar { background: var(--accent2); }
+
+.bubble {
+  padding: 13px 18px; border-radius: 18px;
+  line-height: 1.55; font-size: 14.5px;
+}
+.message.assistant .bubble {
+  background: var(--warm);
+  border: 1px solid var(--border);
+  border-top-left-radius: 4px;
+  color: var(--ink);
+}
+.message.user .bubble {
+  background: var(--ink);
+  color: var(--paper);
+  border-top-right-radius: 4px;
+}
+.msg-meta {
+  font-size: 10px; color: var(--muted);
+  margin-top: 5px; text-align: right;
+}
+.message.assistant .msg-meta { text-align: left; }
+
+.intent-tag {
+  display: inline-block;
+  font-size: 10px; background: var(--warm); color: var(--muted);
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 1px 7px; margin-top: 4px; letter-spacing: .5px;
+}
+
+/* Typing indicator */
+.typing-indicator { display: flex; gap: 12px; align-items: center; }
+.typing-dots { display: flex; gap: 5px; padding: 14px 18px; background: var(--warm); border: 1px solid var(--border); border-radius: 18px; border-top-left-radius: 4px; }
+.typing-dots span { width: 7px; height: 7px; background: var(--muted); border-radius: 50%; animation: dot-bounce .9s infinite; }
+.typing-dots span:nth-child(2) { animation-delay: .15s; }
+.typing-dots span:nth-child(3) { animation-delay: .30s; }
+@keyframes dot-bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+
+/* Input area */
+.input-area {
+  padding: 20px 28px;
+  border-top: 1px solid var(--border);
+  background: var(--paper);
+}
+.input-row {
+  display: flex; gap: 10px; align-items: flex-end;
+  background: var(--warm); border: 1.5px solid var(--border);
+  border-radius: 14px; padding: 10px 14px;
+  transition: border-color .2s;
+}
+.input-row:focus-within { border-color: var(--accent); }
+#userInput {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-family: var(--font-body); font-size: 14.5px; color: var(--ink);
+  resize: none; max-height: 120px; line-height: 1.5;
+}
+#userInput::placeholder { color: var(--muted); }
+.send-btn {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: var(--accent); color: #fff;
+  border: none; cursor: pointer; display: grid; place-items: center;
+  transition: opacity .2s, transform .1s;
+  flex-shrink: 0;
+}
+.send-btn:hover { opacity: .88; }
+.send-btn:active { transform: scale(.94); }
+.send-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+.quick-replies { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.quick-reply {
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 20px; padding: 6px 14px; font-size: 12.5px;
+  font-family: var(--font-body); color: var(--muted); cursor: pointer;
+  transition: border-color .2s, color .2s;
+}
+.quick-reply:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================
+   ONBOARDING MODAL
+   ============================================================ */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(15,14,23,.6);
+  display: grid; place-items: center; z-index: 100;
+  backdrop-filter: blur(4px);
+}
+.modal {
+  background: var(--paper); border-radius: 20px; padding: 40px;
+  width: 420px; max-width: 90vw;
+  animation: scaleIn .3s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+}
+@keyframes scaleIn { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
+.modal h1 { font-family: var(--font-head); font-size: 28px; margin-bottom: 6px; }
+.modal p { color: var(--muted); font-size: 14px; margin-bottom: 28px; line-height: 1.6; }
+.modal input {
+  width: 100%; border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 13px 16px;
+  font-size: 15px; font-family: var(--font-body); color: var(--ink);
+  outline: none; background: var(--warm);
+  transition: border-color .2s; margin-bottom: 16px;
+}
+.modal input:focus { border-color: var(--accent); }
+.modal button {
+  width: 100%; background: var(--ink); color: var(--paper);
+  border: none; border-radius: 10px; padding: 14px;
+  font-size: 15px; font-family: var(--font-body); font-weight: 500;
+  cursor: pointer; transition: opacity .2s;
+}
+.modal button:hover { opacity: .85; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 720px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ONBOARDING MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div style="font-size:32px;margin-bottom:12px">🤖</div>
+    <h1>Meet Aria</h1>
+    <p>Your intelligent customer support assistant. I remember our conversation and can help with billing, technical issues, refunds, and more.</p>
+    <input type="text" id="nameInput" placeholder="Your first name (optional)" maxlength="50"/>
+    <button onclick="initSession()">Start Conversation →</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">🤖</div>
+      <span class="logo-text">Aria</span>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Session Stats</h3>
+      <div class="stat-card">
+        <div class="label">Messages sent</div>
+        <div class="value" id="sidebarMsgCount">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Detected intents</div>
+        <div id="sidebarIntents" style="margin-top:6px;font-size:12px;color:#8a7f76">Waiting...</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Conversation Context</h3>
+      <div id="contextLog" style="font-size:12px;color:#8a7f76;line-height:1.7">
+        Context builds as you chat...
+      </div>
+    </div>
+
+    <button class="new-chat-btn" onclick="clearSession()">
+      ✦ New Conversation
+    </button>
+  </aside>
+
+  <!-- CHAT AREA -->
+  <main class="chat-area">
+    <header class="chat-header">
+      <div class="chat-header-info">
+        <div class="avatar">🤖</div>
+        <div>
+          <h2>Aria</h2>
+          <p>AI Customer Support</p>
+        </div>
+      </div>
+      <div class="status-pill">
+        <span class="status-dot"></span> Online
+      </div>
+    </header>
+
+    <div class="messages-container" id="messagesContainer">
+      <!-- messages injected here -->
+    </div>
+
+    <div class="input-area">
+      <div class="input-row">
+        <textarea id="userInput" placeholder="Type your message..." rows="1"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+      <div class="quick-replies">
+        <button class="quick-reply" onclick="quickSend('I need help with my bill')">💳 Billing help</button>
+        <button class="quick-reply" onclick="quickSend('I want a refund')">↩ Refund</button>
+        <button class="quick-reply" onclick="quickSend('Something is not working')">🔧 Tech support</button>
+        <button class="quick-reply" onclick="quickSend('How do I reset my password?')">🔑 Password reset</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let sessionId = null;
+let userName  = 'Guest';
+let msgCount  = 0;
+let detectedIntents = new Set();
+
+// ============================================================
+// SESSION INIT
+// ============================================================
+async function initSession() {
+  userName = document.getElementById('nameInput').value.trim() || 'Guest';
+  document.getElementById('modalOverlay').style.display = 'none';
+
+  try {
+    const fd = new FormData();
+    fd.append('action', 'init_session');
+    fd.append('user_name', userName);
+
+    const res  = await fetch('api/chat.php', { method: 'POST', body: fd });
+    const json = await res.json();
+
+    if (json.success) {
+      sessionId = json.data.session_id;
+      appendMessage('assistant', json.data.greeting, 'greeting');
+    }
+  } catch(e) {
+    appendMessage('assistant', "Hi! I'm Aria. How can I help you today? (Note: server connection issue — check PHP setup)", '');
+  }
+}
+
+// ============================================================
+// SEND MESSAGE
+// ============================================================
+async function sendMessage() {
+  const input = document.getElementById('userInput');
+  const text  = input.value.trim();
+  if (!text) return;
+
+  appendMessage('user', text, '');
+  input.value = '';
+  input.style.height = 'auto';
+  msgCount++;
+  updateSidebar();
+
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true;
+  showTyping();
+
+  try {
+    const fd = new FormData();
+    fd.append('action', 'send_message');
+    fd.append('message', text);
+    fd.append('session_id', sessionId || '');
+
+    const res  = await fetch('api/chat.php', { method: 'POST', body: fd });
+    const json = await res.json();
+
+    removeTyping();
+    btn.disabled = false;
+
+    if (json.success) {
+      appendMessage('assistant', json.data.reply, json.data.intent);
+      detectedIntents.add(json.data.intent);
+      updateSidebar();
+    } else {
+      appendMessage('assistant', 'Sorry, I ran into an issue. Please try again.', '');
+    }
+  } catch(e) {
+    removeTyping();
+    btn.disabled = false;
+    appendMessage('assistant', 'Connection error. Make sure the PHP server is running.', '');
+  }
+}
+
+function quickSend(text) {
+  document.getElementById('userInput').value = text;
+  sendMessage();
+}
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+function appendMessage(role, content, intent) {
+  const container = document.getElementById('messagesContainer');
+  const isUser = role === 'user';
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+  const wrap = document.createElement('div');
+  wrap.className = `message ${role}`;
+
+  const intentTag = intent && !isUser
+    ? `<div class="intent-tag">⚡ ${intent.replace('_',' ')}</div>` : '';
+
+  wrap.innerHTML = `
+    <div class="msg-avatar">${isUser ? '👤' : '🤖'}</div>
+    <div>
+      <div class="bubble">${escapeHtml(content)}</div>
+      ${intentTag}
+      <div class="msg-meta">${time}</div>
+    </div>`;
+
+  container.appendChild(wrap);
+  container.scrollTop = container.scrollHeight;
+
+  // Update context log
+  const ctx = document.getElementById('contextLog');
+  if (ctx.textContent === 'Context builds as you chat...') ctx.innerHTML = '';
+  const entry = document.createElement('div');
+  entry.textContent = `${isUser ? '👤' : '🤖'} ${content.substring(0, 50)}${content.length > 50 ? '…' : ''}`;
+  ctx.appendChild(entry);
+  if (ctx.children.length > 8) ctx.removeChild(ctx.firstChild);
+}
+
+function showTyping() {
+  const container = document.getElementById('messagesContainer');
+  const el = document.createElement('div');
+  el.className = 'typing-indicator'; el.id = 'typingIndicator';
+  el.innerHTML = `
+    <div class="msg-avatar" style="width:34px;height:34px;border-radius:50%;background:var(--ink);display:grid;place-items:center;font-size:14px">🤖</div>
+    <div class="typing-dots"><span></span><span></span><span></span></div>`;
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+}
+function removeTyping() {
+  document.getElementById('typingIndicator')?.remove();
+}
+
+function updateSidebar() {
+  document.getElementById('sidebarMsgCount').textContent = msgCount;
+  const el = document.getElementById('sidebarIntents');
+  el.innerHTML = detectedIntents.size
+    ? [...detectedIntents].map(i =>
+        `<span style="display:inline-block;background:rgba(255,255,255,.07);border-radius:6px;padding:2px 9px;margin:2px;font-size:11px">${i.replace('_',' ')}</span>`
+      ).join('')
+    : 'Waiting...';
+}
+
+async function clearSession() {
+  if (!confirm('Start a new conversation? This will clear the current chat.')) return;
+  await fetch('api/chat.php', {
+    method: 'POST',
+    body: new URLSearchParams({ action: 'clear_session' })
+  });
+  location.reload();
+}
+
+function escapeHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+// Auto-resize textarea
+document.getElementById('userInput').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+// Enter to send (Shift+Enter = new line)
+document.getElementById('userInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+</script>
+</body>
+</html>
